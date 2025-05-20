@@ -1,0 +1,5 @@
+Pillow
+Gradio
+requests
+paddlepaddle
+paddleocr
