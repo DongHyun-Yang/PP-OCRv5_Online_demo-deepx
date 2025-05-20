@@ -1,5 +1,3 @@
-Pillow
-Gradio
+gradio
+pillow
 requests
-paddlepaddle
-paddleocr
