@@ -22,7 +22,12 @@ def inference(img):
 
     response = requests.post(
         API_URL,
-        json={"file": img_base64, "fileType": 1},
+        json={
+            "file": img_base64,
+            "fileType": 1,
+            "useDocOrientationClassify": False,
+            "useDocUnwarping": False,
+        },
         headers=headers,
         timeout=1000,
     )
@@ -51,7 +56,7 @@ examples = [
     ["examples/magazine.png"],
     ["examples/pinyin_demo.png"],
     ["examples/research.png"],
-    ["examples/tech.png"]
+    ["examples/tech.png"],
 ]
 
 css = ".output_image, .input_image {height: 40rem !important; width: 100% !important;}"
