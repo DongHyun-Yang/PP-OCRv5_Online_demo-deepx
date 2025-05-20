@@ -44,9 +44,14 @@ description = """
 """
 
 examples = [
-    ["en_example.jpg"],
-    ["cn_example.jpg"],
-    ["jp_example.jpg"],
+    ["examples/ancient_demo.png"],
+    ["examples/handwrite_ch_demo.png"],
+    ["examples/handwrite_en_demo.png"],
+    ["examples/japan_demo.png"],
+    ["examples/magazine.png"],
+    ["examples/pinyin_demo.png"],
+    ["examples/research.png"],
+    ["examples/tech.png"]
 ]
 
 css = ".output_image, .input_image {height: 40rem !important; width: 100% !important;}"
