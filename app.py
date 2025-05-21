@@ -20,6 +20,8 @@ def inference(img):
         "Content-Type": "application/json",
     }
 
+    import time
+    t1 = time.time()
     response = requests.post(
         API_URL,
         json={
@@ -31,19 +33,24 @@ def inference(img):
         headers=headers,
         timeout=1000,
     )
+    print("t1", time.time()-t1, flush=True)
     response.raise_for_status()
 
     result = response.json()
     ocr_img_url = result["result"]["ocrResults"][0]["ocrImage"]
 
+    t2 = time.time()
     response = requests.get(ocr_img_url, timeout=10)
+    print("t2", time.time()-t2, flush=True)
     response.raise_for_status()
-    return Image.open(io.BytesIO(response.content))
+    ocr_img_base64 = Image.open(io.BytesIO(response.content))
+
+    return ocr_img_base64, result["result"]["ocrResults"][0]["prunedResult"]
 
 
 title = "PP-OCRv5"
 description = """
-- Gradio demo for PP-OCRv5. This demo supports Chinese, English, French, German, Korean, and Japanese.
+- Gradio demo for PP-OCRv5. PP-OCRv5 is the new generation text recognition solution of PP-OCR, focusing on multi-scenario and multi-text type recognition. In terms of text types, PP-OCRv5 supports 5 major mainstream text types: Simplified Chinese, Chinese Pinyin, Traditional Chinese, English, and Japanese. For scenarios, PP-OCRv5 has upgraded recognition capabilities for challenging scenarios such as complex Chinese and English handwriting, vertical text, and uncommon characters.
 - To use it, simply upload your image, or click one of the examples to load them. Read more at the links below.
 - [Docs](https://paddlepaddle.github.io/PaddleOCR/), [Github Repository](https://github.com/PaddlePaddle/PaddleOCR).
 """
@@ -62,10 +69,8 @@ examples = [
 css = ".output_image, .input_image {height: 40rem !important; width: 100% !important;}"
 gr.Interface(
     inference,
-    [
-        gr.Image(type="pil", label="Input"),
-    ],
-    gr.Image(type="pil", label="Output"),
+    gr.Image(type="pil", label="Input Image"),
+    [gr.Image(type="pil", label="Output Image"), gr.JSON(label="Output JSON", show_label=True)],
     title=title,
     description=description,
     examples=examples,
