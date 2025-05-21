@@ -20,8 +20,6 @@ def inference(img):
         "Content-Type": "application/json",
     }
 
-    import time
-    t1 = time.time()
     response = requests.post(
         API_URL,
         json={
@@ -33,15 +31,12 @@ def inference(img):
         headers=headers,
         timeout=1000,
     )
-    print("t1", time.time()-t1, flush=True)
     response.raise_for_status()
 
     result = response.json()
     ocr_img_url = result["result"]["ocrResults"][0]["ocrImage"]
 
-    t2 = time.time()
     response = requests.get(ocr_img_url, timeout=10)
-    print("t2", time.time()-t2, flush=True)
     response.raise_for_status()
     ocr_img_base64 = Image.open(io.BytesIO(response.content))
 
