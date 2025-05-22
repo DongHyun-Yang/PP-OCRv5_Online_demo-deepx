@@ -27,6 +27,7 @@ def inference(img):
             "fileType": 1,
             "useDocOrientationClassify": False,
             "useDocUnwarping": False,
+            "useTextlineOrientation": False,
         },
         headers=headers,
         timeout=1000,
