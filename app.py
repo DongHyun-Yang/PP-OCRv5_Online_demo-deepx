@@ -47,7 +47,7 @@ def inference(img):
 title = "PP-OCRv5 Online Demo"
 description = """
 - PP-OCRv5 is the latest generation of the PP-OCR series model, designed to handle a wide range of scene and text types.
-- It supports five major text types: Simplified Chinese, Traditional Chinese, Chinese Pinyin, English, and Japanese.
+- It supports five major text types: Simplified Chinese, Traditional Chinese, Pinyin annotation, English, and Japanese.
 - PP-OCRv5 has enhanced recognition capabilities for challenging use cases, including complex handwritten Chinese and English, vertical text, and rare characters.
 - To use it, simply upload your image, or click one of the examples to load them. Read more at the links below.
 - [Docs](https://paddlepaddle.github.io/PaddleOCR/), [Github Repository](https://github.com/PaddlePaddle/PaddleOCR).
