@@ -44,7 +44,7 @@ def inference(img):
     return ocr_img_base64, result["result"]["ocrResults"][0]["prunedResult"]
 
 
-title = "PP-OCRv5 online demo"
+title = "PP-OCRv5 Online Demo"
 description = """
 - PP-OCRv5 is the latest generation of the PP-OCR series model, designed to handle a wide range of scene and text types.
 - It supports five major text types: Simplified Chinese, Traditional Chinese, Chinese Pinyin, English, and Japanese.
@@ -64,7 +64,11 @@ examples = [
     ["examples/tech.png"],
 ]
 
-css = ".output_image, .input_image {height: 40rem !important; width: 100% !important;}"
+css = """
+.output_image, .input_image {height: 40rem !important; width: 100% !important;}
+h1 {text-align: center !important;}
+"""
+
 gr.Interface(
     inference,
     gr.Image(type="pil", label="Input Image"),
