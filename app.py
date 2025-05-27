@@ -44,9 +44,11 @@ def inference(img):
     return ocr_img_base64, result["result"]["ocrResults"][0]["prunedResult"]
 
 
-title = "PP-OCRv5"
+title = "PP-OCRv5 online demo"
 description = """
-- Gradio demo for PP-OCRv5. PP-OCRv5 is the new generation text recognition solution of PP-OCR, focusing on multi-scenario and multi-text type recognition. In terms of text types, PP-OCRv5 supports 5 major mainstream text types: Simplified Chinese, Chinese Pinyin, Traditional Chinese, English, and Japanese. For scenarios, PP-OCRv5 has upgraded recognition capabilities for challenging scenarios such as complex Chinese and English handwriting, vertical text, and uncommon characters.
+- PP-OCRv5 is the latest generation of the PP-OCR series model, designed to handle a wide range of scene and text types.
+- It supports five major text types: Simplified Chinese, Traditional Chinese, Chinese Pinyin, English, and Japanese.
+- PP-OCRv5 has enhanced recognition capabilities for challenging use cases, including complex handwritten Chinese and English, vertical text, and rare characters.
 - To use it, simply upload your image, or click one of the examples to load them. Read more at the links below.
 - [Docs](https://paddlepaddle.github.io/PaddleOCR/), [Github Repository](https://github.com/PaddlePaddle/PaddleOCR).
 """
