@@ -9,6 +9,12 @@ app_file: app.py
 pinned: false
 license: apache-2.0
 short_description: Universal-Scene Text Recognition Model with High-Accuracy
+tags:
+  - ocr
+  - paddleocr
+  - computer-vision
+  - image-to-text
+  - gradio
 ---
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
