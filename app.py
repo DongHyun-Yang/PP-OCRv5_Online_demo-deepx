@@ -169,7 +169,6 @@ button {
     color: white !important;
     transition: all 0.3s ease !important;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
-    position: fixed !important;
     bottom: 1% !important;
     left: 3% !important;
     z-index: 1000 !important;
@@ -181,7 +180,6 @@ button {
     color: white !important;
     transition: all 0.3s ease !important;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
-    position: fixed !important;
     bottom: 1% !important;
     left: 18% !important;
     z-index: 1000 !important;
@@ -754,7 +752,8 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
                     Results will be displayed after processing<br>
                     <b>Step 4:</b> Download results zip<br>
                     Results zip will be displayed after processing<br><br>
-                    <b>Attention:</b> Only the first 10 pages will be processed
+                    <b>Attention:</b> Only the first 10 pages will be processed<br>
+                    <b>⚠️Special Attention: </b>For safety reasons, please make sure that the uploaded files do not contain personal information.
                 </div>
                 """
                 )
