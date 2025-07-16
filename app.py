@@ -46,7 +46,6 @@ CSS = """
     --link-hover: #2b6cb0;
     --content-width: 1200px;
 }
-
 body {
     display: flex;
     justify-content: center;
@@ -54,7 +53,6 @@ body {
     color: var(--text-color);
     font-family: Arial, sans-serif;
 }
-
 .upload-section {
     width: 100%;
     margin: 0 auto 30px;
@@ -63,7 +61,6 @@ body {
     border-radius: 8px;
     box-shadow: var(--shadow);
 }
-
 .center-content {
     display: flex;
     flex-direction: column;
@@ -71,24 +68,20 @@ body {
     text-align: center;
     margin-bottom: 20px;
 }
-
 .header {
     margin-bottom: 30px;
     width: 100%;
 }
-
 .logo-container {
     width: 100%;
     margin-bottom: 20px;
 }
-
 .logo-img {
     width: 100%;
     max-width: var(--content-width);
     margin: 0 auto;
     display: block;
 }
-
 .nav-bar {
     display: flex;
     justify-content: center;
@@ -97,14 +90,12 @@ body {
     box-shadow: var(--shadow);
     margin-bottom: 20px;
 }
-
 .nav-links {
     display: flex;
     gap: 30px;
     width: 100%;
     justify-content: center;
 }
-
 .nav-link {
     color: var(--black);
     text-decoration: none;
@@ -112,12 +103,10 @@ body {
     font-size: 24px;
     transition: color 0.2s;
 }
-
 .nav-link:hover {
     color: var(--link-hover);
     text-decoration: none;
 }
-
 button {
     background-color: var(--text-color) !important;
     color: var(--black) !important;
@@ -125,7 +114,6 @@ button {
     border-radius: 4px;
     padding: 8px 16px;
 }
-
 .file-download {
     margin-top: 15px !important;
 }
@@ -138,12 +126,10 @@ button {
     animation: spin 1s linear infinite;
     margin: 20px auto;
 }
-
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
-
 .loader-container {
     text-align: center;
     margin: 20px 0;
@@ -158,12 +144,10 @@ button {
     padding: 10px;
     border-radius: 4px;
 }
-
 .bold-label .gr-radio label {
     font-size: 14px;
     color: var(--black);
 }
-
 #analyze-btn {
     background-color: #FF5722 !important;
     color: white !important;
@@ -173,8 +157,6 @@ button {
     left: 3% !important;
     z-index: 1000 !important;
 }
-
-
 #unzip-btn {
     background-color: #4CAF50 !important;
     color: white !important;
@@ -184,19 +166,16 @@ button {
     left: 18% !important;
     z-index: 1000 !important;
 }
-
 #download_file {
     position: fixed !important;
     bottom: 1% !important;
     left: 22% !important;
     z-index: 1000 !important;
 }
-
 #analyze-btn:hover,#unzip-btn:hover{
     transform: translateY(-3px) !important;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
 }
-
 .square-pdf-btn {
     width: 90% !important;
     height: 3% !important;
@@ -207,53 +186,37 @@ button {
     justify-content: center !important;
     gap: 8px !important;
 }
-
-
 .square-pdf-btn img {
     width: 20% !important;
     height: 1% !important;
     margin: 0 !important;
 }
-
-
 .square-pdf-btn span {
     font-size: 14px !important;
     text-align: center !important;
 }
-
-
 .gradio-gallery-item:hover {
     background-color: transparent !important;
     filter: none !important;
     transform: none !important;
 }
-
 .custom-markdown h3 {
     font-size: 25px !important;
 }
-
 .tight-spacing {
-    margin-bottom: -20px !important;
+    margin-bottom: -5px !important;
 }
-
 .tight-spacing-as {
     margin-top: 0px !important;
     margin-bottom: 0px !important;
 }
 
-.left-margin-column {
-    margin-left: 5%;
-}
-
 .image-container img {
     display: inline-block !important;
 }
-
 #markdown-title {
     text-align: center;
 }
-
-
 }
 """
 
@@ -463,6 +426,7 @@ def toggle_spinner():
         gr.Column(visible=False),
         gr.File(visible=False),
         gr.update(visible=False),
+        gr.update(visible=False),
     )
 
 
@@ -588,7 +552,7 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
                     elem_classes=["tight-spacing"],
                 )
                 with gr.Column(
-                    visible=True, elem_classes="left-margin-column"
+                    visible=True
                 ) as Module_Options:
                     use_doc_orientation_classify_md = gr.Markdown(
                         "### Using the document image orientation classification module",
@@ -624,7 +588,7 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
                         elem_id="use_textline_orientation_rd",
                     )
                 with gr.Column(
-                    visible=False, elem_classes="left-margin-column"
+                    visible=False
                 ) as Text_detection_Options:
                     text_det_limit_type_md = gr.Markdown(
                         "### Image side length restriction type for text detection",
@@ -707,11 +671,7 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
                 process_btn = gr.Button(
                     "🚀 Parse Document", elem_id="analyze-btn", variant="primary"
                 )
-                download_all_btn = gr.Button(
-                    "📦 Download Full Results (ZIP)",
-                    elem_id="unzip-btn",
-                    variant="primary",
-                )
+
 
         # Results display section
         with gr.Column(scale=7):
@@ -818,6 +778,12 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
                                     visible=False,
                                 )
                             )
+            download_all_btn = gr.Button(
+                    "📦 Download Full Results (ZIP)",
+                    elem_id="unzip-btn",
+                    variant="primary",
+                    visible=False,
+                )                            
     # # Navigation bar
     with gr.Column(elem_classes=["nav-bar"]):
         gr.HTML(
@@ -851,7 +817,7 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
     """,
     )
     process_btn.click(
-        toggle_spinner, outputs=[loading_spinner, prepare_spinner, download_file, tabs]
+        toggle_spinner, outputs=[loading_spinner, prepare_spinner, download_file, tabs, download_all_btn]
     ).then(
         process_file,
         inputs=[
@@ -874,7 +840,7 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
         update_display,
         inputs=[results_state],
         outputs=overall_ocr_res_images + output_json_list + gallery_list,
-    )
+    ).then(lambda: gr.update(visible=True), outputs=download_all_btn)
     gallery_ocr_det.select(update_image, outputs=overall_ocr_res_images)
 
     download_all_btn.click(
@@ -923,11 +889,9 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
                     tooltip.style.left = x + "px";
                     tooltip.style.top = y + "px";
                 }}
-
                 function hideTooltip() {{
                     tooltip.style.opacity = "0";
                 }}
-
                 elem.addEventListener("mousemove", showTooltip);
                 elem.addEventListener("mouseleave", hideTooltip);
             }});
