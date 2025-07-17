@@ -231,9 +231,9 @@ EXAMPLE_TEST = [
     ["examples/tech.png"],
 ]
 DESC_DICT = {
-    "use_doc_orientation_classify": "Whether to use the document image orientation classification module. After use, you can correct distorted images, such as wrinkles, tilts, etc.",
-    "use_doc_unwarping": "Whether to use the document unwarping module. After use, you can correct distorted images, such as wrinkles, tilts, etc.",
-    "use_textline_orientation": "Whether to use the text line orientation classification module to support the distinction and correction of text lines of 0 degrees and 180 degrees.",
+    "use_doc_orientation_classify": "Enable the document image orientation classification module. When enabled, you can correct distorted images, such as wrinkles, tilts, etc.",
+    "use_doc_unwarping": "Enable the document unwarping module. When enabled, you can correct distorted images, such as wrinkles, tilts, etc.",
+    "use_textline_orientation": "Enable the text line orientation classification module to support the distinction and correction of text lines of 0 degrees and 180 degrees.",
     "text_det_limit_type": "[Short side] means to ensure that the shortest side of the image is not less than [Image side length limit for text detection], and [Long side] means to ensure that the longest side of the image is not greater than [Image side length limit for text detection].",
     "text_det_limit_side_len_nb": "For the side length limit of the text detection input image, for large images with dense text, if you want more accurate recognition, you should choose a larger size. This parameter is used in conjunction with the [Image side length limit type for text detection]. Generally, the maximum [Long side] is suitable for scenes with large images and text, and the minimum [Short side] is suitable for document scenes with small and dense images.",
     "text_det_thresh_nb": "In the output probability map, only pixels with scores greater than the threshold are considered text pixels, and the value range is 0~1.",
