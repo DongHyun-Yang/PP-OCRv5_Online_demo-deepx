@@ -551,9 +551,7 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
                     scale=0,
                     elem_classes=["tight-spacing"],
                 )
-                with gr.Column(
-                    visible=True
-                ) as Module_Options:
+                with gr.Column(visible=True) as Module_Options:
                     use_doc_orientation_classify_md = gr.Markdown(
                         "### Using the document image orientation classification module",
                         elem_id="use_doc_orientation_classify_md",
@@ -587,9 +585,7 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
                         show_label=False,
                         elem_id="use_textline_orientation_rd",
                     )
-                with gr.Column(
-                    visible=False
-                ) as Text_detection_Options:
+                with gr.Column(visible=False) as Text_detection_Options:
                     text_det_limit_type_md = gr.Markdown(
                         "### Image side length restriction type for text detection",
                         elem_id="text_det_limit_type_md",
@@ -671,7 +667,6 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
                 process_btn = gr.Button(
                     "🚀 Parse Document", elem_id="analyze-btn", variant="primary"
                 )
-
 
         # Results display section
         with gr.Column(scale=7):
@@ -779,11 +774,11 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
                                 )
                             )
             download_all_btn = gr.Button(
-                    "📦 Download Full Results (ZIP)",
-                    elem_id="unzip-btn",
-                    variant="primary",
-                    visible=False,
-                )                            
+                "📦 Download Full Results (ZIP)",
+                elem_id="unzip-btn",
+                variant="primary",
+                visible=False,
+            )
     # # Navigation bar
     with gr.Column(elem_classes=["nav-bar"]):
         gr.HTML(
@@ -817,7 +812,14 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
     """,
     )
     process_btn.click(
-        toggle_spinner, outputs=[loading_spinner, prepare_spinner, download_file, tabs, download_all_btn]
+        toggle_spinner,
+        outputs=[
+            loading_spinner,
+            prepare_spinner,
+            download_file,
+            tabs,
+            download_all_btn,
+        ],
     ).then(
         process_file,
         inputs=[
@@ -840,7 +842,10 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
         update_display,
         inputs=[results_state],
         outputs=overall_ocr_res_images + output_json_list + gallery_list,
-    ).then(lambda: gr.update(visible=True), outputs=download_all_btn)
+    ).success(
+        lambda: gr.update(visible=True), outputs=download_all_btn
+    )
+
     gallery_ocr_det.select(update_image, outputs=overall_ocr_res_images)
 
     download_all_btn.click(
