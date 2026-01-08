@@ -14,6 +14,9 @@ import gradio as gr
 import requests
 from PIL import Image
 
+# Get absolute path for static files
+BASE_DIR = Path(__file__).parent.resolve()
+
 API_URL = os.environ.get("API_URL", "http://localhost:8080/api/v1/ocr")
 
 TOKEN = os.environ.get("API_TOKEN", "")
@@ -81,8 +84,29 @@ body, .gradio-container {
 }
 
 .gradio-container {
-    max-width: 1400px !important;
-    margin: 0 auto !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 10px !important;
+}
+
+/* Force all containers to use full width */
+.gradio-container .app,
+.gradio-container main,
+.gradio-container .wrap,
+.gradio-container .contain,
+.row,
+#results-column,
+#sidebar-column,
+.white-container,
+.column {
+    max-width: none !important;
+    width: 100% !important;
+}
+
+/* Override any flex basis constraints */
+.row > .column {
+    flex-basis: 0 !important;
 }
 
 /* ===== Typography ===== */
@@ -115,11 +139,85 @@ span[data-testid="block-info"] {
     font-weight: inherit !important;
 }
 
+/* Hide Examples default label */
+.gallery.svelte-p5q82i {
+    margin-top: 0 !important;
+}
+
+.block.svelte-1svsvh2 .label.svelte-p5q82i {
+    display: none !important;
+}
+
 .custom-markdown h3 {
     font-size: 20px !important;
     color: var(--title-color) !important;
     font-weight: 600 !important;
     margin-bottom: 16px !important;
+}
+
+/* ===== Sidebar Toggle ===== */
+#sidebar-toggle-btn {
+    position: fixed !important;
+    left: 0 !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 1000 !important;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #4658FF 100%) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    border-radius: 0 12px 12px 0 !important;
+    padding: 18px 12px !important;
+    cursor: pointer !important;
+    box-shadow: 3px 0 12px rgba(41, 50, 225, 0.4) !important;
+    transition: all 0.3s ease !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 8px !important;
+    line-height: 1 !important;
+    letter-spacing: 0.5px !important;
+}
+
+#sidebar-toggle-btn:hover {
+    background: linear-gradient(135deg, #4658FF 0%, var(--primary-color) 100%) !important;
+    box-shadow: 3px 0 16px rgba(41, 50, 225, 0.5) !important;
+    padding-right: 16px !important;
+}
+
+#sidebar-toggle-btn .toggle-icon {
+    font-size: 20px !important;
+    display: block !important;
+    color: #FFFFFF !important;
+    font-weight: bold !important;
+}
+
+#sidebar-toggle-btn .toggle-text {
+    font-size: 12px !important;
+    display: block !important;
+    white-space: nowrap !important;
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+    writing-mode: vertical-rl !important;
+    text-orientation: mixed !important;
+}
+
+.sidebar-column {
+    transition: all 0.3s ease !important;
+    overflow: visible !important;
+    position: relative !important;
+}
+
+.sidebar-hidden {
+    transform: translateX(-90%) !important;
+    opacity: 0.3 !important;
+    pointer-events: none !important;
+}
+
+.sidebar-hidden:hover {
+    opacity: 0.5 !important;
 }
 
 /* ===== Card & Panel ===== */
@@ -724,16 +822,25 @@ span[data-testid="block-info"] {
 }
 """
 
-EXAMPLE_TEST = [
-    ["examples/ancient_demo.png"],
-    ["examples/handwrite_ch_demo.png"],
-    ["examples/handwrite_en_demo.png"],
-    ["examples/japan_demo.png"],
-    ["examples/magazine.png"],
-    ["examples/pinyin_demo.png"],
-    ["examples/research.png"],
-    ["examples/tech.png"],
-]
+EXAMPLE_DIR = BASE_DIR / "examples"
+EXAMPLE_PDF_DIR = BASE_DIR / "examples_pdf"
+
+# Dynamically load example files from directories
+def load_examples_from_dir(directory, extensions):
+    """Load all files with specified extensions from directory"""
+    examples = []
+    if directory.exists() and directory.is_dir():
+        for file_path in sorted(directory.iterdir()):
+            if file_path.is_file() and file_path.suffix.lower() in extensions:
+                examples.append([str(file_path)])
+    return examples
+
+# Load image examples (png, jpg, jpeg)
+EXAMPLE_TEST = load_examples_from_dir(EXAMPLE_DIR, {'.png', '.jpg', '.jpeg'})
+
+# Load PDF examples
+EXAMPLE_PDF = load_examples_from_dir(EXAMPLE_PDF_DIR, {'.pdf'})
+
 DESC_DICT = {
     "use_doc_orientation_classify": "Enable the document image orientation classification module. When enabled, you can correct distorted images, such as wrinkles, tilts, etc.",
     "use_doc_unwarping": "Enable the document unwarping module. When enabled, you can correct distorted images, such as wrinkles, tilts, etc.",
@@ -926,26 +1033,114 @@ def export_full_results(results):
     except Exception as e:
         raise gr.Error(f"Error creating ZIP file: {str(e)}")
 
+def on_file_change_from_examples_image(file):
+    return on_common_change(file, "examples_image")
 
-def on_file_change(file):
-    if file:
-        return gr.Textbox(
-            value=f"✅ Chosen file:  {os.path.basename(file.name)}", visible=True
-        )
+def on_file_change_from_examples_pdf(file):
+    return on_common_change(file, "examples_pdf")
+
+def on_file_change_from_input_impl(file_select, self_input, ref_input, called_from):
+    if file_select != '':
+        # file_select가 이미 설정되어 있음, X버튼을 눌렸는지 파악하고 X 버튼 누른경우면 file_select 초기화
+        if ref_input is not None:
+            # img인 경우 file이 이미 설정된게 있음
+            # file인 경우 img가 이미 설정된게 있음
+            if self_input is not  None:
+                # 자신이 비지 않은 경우
+                if self_input != ref_input:
+                    # 자신과 ref가 다른경우 정상 변경된 경우
+                    return on_common_change(self_input, called_from)
+                else: 
+                    # 자신과 ref가 같은경우 X버튼 눌려서 초기화된 경우
+                    return gr.Textbox(value=None, visible=False), gr.File(value=None), gr.Image(value=None)
+            else:
+                # 자신이 빈경우 skip
+                return gr.skip(), gr.skip(), gr.skip()
+        else:
+            # img인 경우 file이 설정된게 없음
+            # file인 경우 img가 설정된게 없음
+            if self_input is not  None:
+                # 자신이 비지 않은 경우
+                if (file_select in os.path.basename(self_input)):
+                    # 자신과 file_select가 같은경우 X버튼 눌려서 초기화된 경우
+                    return gr.Textbox(value=None, visible=False), gr.File(value=None), gr.Image(value=None)
+                else:
+                    # 자신과 file_select가 다른경우 정상 변경된 경우
+                    return on_common_change(self_input, called_from)
+            else:
+                # file_select는 존재하는데 self와 ref가 비어있는경우는 초기화
+                if self_input is None:
+                    return gr.Textbox(value=None, visible=False), gr.File(value=None), gr.Image(value=None)
+                else:
+                    # file_select가 존재 self는 존재하나 ref는 비어있는 경우 skip
+                    return gr.skip(), gr.skip(), gr.skip()
     else:
-        return gr.Textbox(visible=False)
+        # file_select가 빈경우 skip
+        return gr.skip(), gr.skip(), gr.skip()
 
+def on_file_change_from_file_input(file_select, self_input, ref_input):
+    return on_file_change_from_input_impl(file_select, self_input, ref_input, "file_input")
+
+def on_file_change_from_image_input(file_select, self_input, ref_input):
+    return on_file_change_from_input_impl(file_select, self_input, ref_input, "image_input")
+
+def on_common_change_impl(file):
+    """Handle file input change and return status textbox"""
+    if file is not None:
+        try:
+            filename = os.path.basename(file.name) if hasattr(file, 'name') else os.path.basename(str(file))
+            return gr.Textbox(value=f"✅ Chosen file: {filename}", visible=True)
+        except Exception:
+            return gr.Textbox(value="✅ File selected", visible=True)
+    return gr.Textbox(value=None, visible=False)
+
+def on_common_change(file, called_from):
+    """Handle file input change and return status textbox"""
+    input_select = on_common_change_impl(file)
+
+    if called_from == 'examples_image':
+        file_input = gr.File(value=None)
+        image_input = gr.skip()
+    elif called_from == 'examples_pdf':
+        file_input = gr.skip()
+        image_input = gr.Image(value=None)
+    elif called_from == 'file_input':
+        file_input = gr.skip()
+        image_input = gr.Image(value=None)
+    elif called_from == 'image_input':
+        file_input = gr.File(value=None)
+        image_input = gr.skip()
+    else:
+        raise ValueError("Invalid called_from value")
+    
+    return input_select, file_input, image_input
 
 def clear_file_selection():
     return gr.File(value=None), gr.Textbox(value=None, visible=False)
 
 
-def clear_file_selection_examples(image_input):
-    """Examples 선택시 호출 - file_input은 건드리지 않고 상태 텍스트만 업데이트"""
-    text_name = "✅ Chosen file: " + os.path.basename(image_input)
-    # file_input을 None으로 설정하지 않음 - 이렇게 하면 file_input.change가 트리거되어 상태가 리셋됨
-    # gr.skip()을 사용하여 file_input 값을 변경하지 않음
-    return gr.skip(), gr.Textbox(value=text_name, visible=True)
+def clear_file_selection_from_examples_image(image_input):
+    """Examples 선택시 호출 - 상태 텍스트만 업데이트"""
+    if image_input is None:
+        return gr.Textbox(value=None, visible=False)
+    try:
+        text_name = "✅ Chosen file: " + os.path.basename(image_input)
+        return gr.Textbox(value=text_name, visible=True)
+    except Exception:
+        return gr.Textbox(value="✅ Example selected", visible=True)
+
+
+def clear_file_on_image_change(image_input):
+    """image_input이 변경되면 file_input 초기화"""
+    if image_input is not None:
+        return gr.File(value=None)
+    return gr.skip()
+
+# def clear_image_on_file_change(file_input):
+#     """file_input이 변경되면 image_input 초기화"""
+#     if file_input is not None:
+#         return gr.Image(value=None)
+#     return gr.skip()
 
 
 def toggle_device_options(inference_device):
@@ -991,9 +1186,6 @@ def validate_file_input(file_path, image_input):
     """파일이 선택되었는지 확인하고, 없으면 경고 표시"""
     if not file_path and not image_input:
         gr.Warning("📁 Please select a file first before parsing.")
-        return False
-    return True
-
 
 def toggle_spinner(file_path, image_input):
     """파일이 있을 때만 스피너 표시"""
@@ -1088,13 +1280,28 @@ def delete_file_periodically():
                 del tmp_time[filename]
         time.sleep(THREAD_WAKEUP_TIME)
 
-# Get absolute path for static files
-BASE_DIR = Path(__file__).parent.resolve()
 BANNER_PATH = str(BASE_DIR / "res" / "img" / "deepx-baidu-pp-banner.png")
+BANNER_CES_PATH = str(BASE_DIR / "res" / "img" / "DEEPX-Banner-CES-2026-01.png")
 
-with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
+# 브라우저의 언어 설정을 'en-US'로 속이는 스크립트
+FORCE_EN_SCRIPT = """
+<script>
+    try {
+        Object.defineProperty(navigator, 'language', {
+            get: function() { return 'en-US'; }
+        });
+        Object.defineProperty(navigator, 'languages', {
+            get: function() { return ['en-US', 'en']; }
+        });
+    } catch (e) {
+        console.log("Language override failed");
+    }
+</script>
+"""
+
+with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme, head=FORCE_EN_SCRIPT) as demo:
     results_state = gr.State()
-    
+
     gr.Image(
         value=BANNER_PATH,
         show_label=False,
@@ -1103,8 +1310,6 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
         container=False,
         elem_classes=["banner-container"],
     )
-    
-    gr.Markdown("---")
 
     # gr.Markdown(
     #     value=f"## PP-OCRv5 Online Demo",
@@ -1122,12 +1327,21 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
     # )
     
     with gr.Row():
-        with gr.Column(scale=4):
+        with gr.Column(scale=3, elem_classes=["sidebar-column"], elem_id="sidebar-column"):
+            # Inference device section
+            gr.Markdown("#### ⚡ Inference Device")
+            with gr.Column(elem_classes=["white-container"]):
+                
+                inference_device = gr.Radio(
+                    choices=[("DEEPX NPU", True), ("CPU", False)],
+                    value=True,
+                    show_label=False,
+                    elem_id="inference_device",
+            )
 
             # Upload section
+            gr.Markdown("#### 📁 Input File")
             with gr.Column(elem_classes=["white-container"]):
-                gr.Markdown("#### Input File")
-                
                 with gr.Column(elem_classes=["upload-area"]):
                     file_input = gr.File(
                         # label="📤 Click or drag file to upload",
@@ -1137,14 +1351,20 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
                         show_label=False,
                         elem_classes=["drag-drop-file-custom"],
                     )
-                
-                file_select = gr.Textbox(
-                    show_label=False, 
-                    visible=False,
-                    interactive=False,
-                    elem_classes=["file-status"]
+
+                    file_select = gr.Textbox(
+                        show_label=False, 
+                        visible=False,
+                        interactive=False,
+                        elem_classes=["file-status"],
+                    )
+
+                process_btn = gr.Button(
+                    "🚀 Parse Document", elem_id="analyze-btn", variant="primary"
                 )
-                
+
+                gr.Markdown("##### 📷 Image Examples")
+
                 image_input = gr.Image(
                     label="Image",
                     sources="upload",
@@ -1155,31 +1375,38 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
                 )
 
                 examples_image = gr.Examples(
-                    fn=clear_file_selection_examples,
+                    fn=on_file_change_from_examples_image,
                     inputs=image_input,
-                    outputs=[file_input, file_select],
-                    examples_per_page=11,
+                    outputs=[file_select, file_input, image_input],
+                    examples_per_page=8,
                     examples=EXAMPLE_TEST,
                     run_on_click=True,
                 )
+                
+                gr.Markdown("##### 📄 PDF Examples")
+                examples_pdf = gr.Examples(
+                    fn=on_file_change_from_examples_pdf,
+                    inputs=file_input,
+                    outputs=[file_select, file_input, image_input],
+                    examples_per_page=5,
+                    examples=EXAMPLE_PDF,
+                    run_on_click=True,
+                )
+
+                image_input.change(
+                    fn=on_file_change_from_image_input,
+                    inputs=[file_select, image_input, file_input],
+                    outputs=[file_select, file_input, image_input],
+                )
 
                 file_input.change(
-                    fn=on_file_change, inputs=file_input, outputs=[file_select]
+                    fn=on_file_change_from_file_input, 
+                    inputs=[file_select, file_input, image_input],
+                    outputs=[file_select, file_input, image_input]
                 )
-
-                process_btn = gr.Button(
-                    "🚀 Parse Document", elem_id="analyze-btn", variant="primary"
-                )
-
-            with gr.Column(elem_classes=["white-container"]):
-                gr.Markdown("#### Inference Device")
-                inference_device = gr.Radio(
-                    choices=[("DEEPX NPU", True), ("CPU", False)],
-                    value=True,
-                    show_label=False,
-                    elem_id="inference_device",
-            )
-
+            
+            # Settings section
+            gr.Markdown("#### ⚙️ Settings")
             with gr.Tabs() as advance_options_tabs:
                 with gr.Tab("Module Selection") as Module_Options:
                     use_doc_orientation_classify_cb = gr.Checkbox(
@@ -1285,8 +1512,9 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
                     )
 
         # Results display section
-        with gr.Column(scale=7, elem_classes=["white-container"]):
-            # gr.Markdown("### 📋 Results", elem_classes="custom-markdown")
+        with gr.Column(scale=7, elem_classes=["white-container"], elem_id="results-column"):
+            gr.Markdown("### 📋 Results", elem_classes="custom-markdown")
+
             loading_spinner = gr.Column(
                 visible=False, elem_classes=["loader-container"]
             )
@@ -1310,7 +1538,7 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
                     <div style="display: grid; gap: 12px;">
                         <div style="display: flex; align-items: flex-start; gap: 12px;">
                             <span style="background: #2932E1; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0;">1</span>
-                            <div><b style="color: #140E35;">Upload Your File</b><br><span style="font-size: 13px;">Supported formats: JPG, PNG, PDF, JPEG</span></div>
+                            <div><b style="color: #140E35;">Upload Your File</b><br><span style="font-size: 13px;">Upload directly or select from Image/PDF Examples below<br>Supported formats: JPG, PNG, PDF, JPEG</span></div>
                         </div>
                         <div style="display: flex; align-items: flex-start; gap: 12px;">
                             <span style="background: #2932E1; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0;">2</span>
@@ -1320,13 +1548,18 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
                             <span style="background: #2932E1; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0;">3</span>
                             <div><b style="color: #140E35;">View & Download Results</b><br><span style="font-size: 13px;">Results will be displayed after processing</span></div>
                         </div>
+                        <div style="display: flex; align-items: flex-start; gap: 12px;">
+                            <span style="background: #2932E1; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0;">4</span>
+                            <div><b style="color: #140E35;">Expand Results View</b><br><span style="font-size: 13px;">Click <b>HIDE LEFT MENU</b> button on the left to view results in full screen</span></div>
+                        </div>
                     </div>
                     <div style="margin-top: 16px; padding: 12px 16px; background: #FFF7E6; border-radius: 6px; border-left: 3px solid #FAAD14;">
                         <span style="font-weight: 600; color: #D48806;">⚠️ Notice:</span>
-                        <span style="color: #8C6D1F;">Only the first 10 pages will be processed. Please ensure uploaded files do not contain personal information.</span>
+                        <span style="color: #8C6D1F;">Only the first 3 pages will be processed. Please ensure uploaded files do not contain personal information.</span>
                     </div>
                     """
                 )
+
             download_file = gr.File(visible=False, label="Download File")
             overall_ocr_res_images = []
             output_json_list = []
@@ -1394,6 +1627,28 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
                 variant="primary",
                 visible=False,
             )
+
+            gr.Markdown("")
+
+            gr.Image(
+                value=BANNER_CES_PATH,
+                show_label=False,
+                show_download_button=False,
+                show_fullscreen_button=False,
+                container=False,
+                elem_classes=["banner-container"],
+            )
+
+    # Sidebar toggle button
+    gr.HTML(
+        """
+        <button id="sidebar-toggle-btn">
+            <span class="toggle-icon">◀</span>
+            <span class="toggle-text">HIDE LEFT MENU</span>
+        </button>
+        """
+    )        
+
     # # Navigation bar - Baidu AI Studio Style
     # with gr.Column(elem_classes=["nav-bar"]):
     #     gr.HTML(
@@ -1422,8 +1677,8 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
     #     """
     #     )
 
-    # Banner
-    gr.Markdown("---")
+    
+    gr.Markdown("")
     gr.Image(
         value=BANNER_PATH,
         show_label=False,
@@ -1498,6 +1753,50 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
         outputs=[],
         js=f"""
         () => {{
+            // Sidebar toggle functionality
+            let sidebarVisible = true;
+            const toggleBtn = document.getElementById('sidebar-toggle-btn');
+            const sidebar = document.getElementById('sidebar-column');
+            const resultsColumn = document.getElementById('results-column');
+            
+            if (toggleBtn && sidebar) {{
+                toggleBtn.addEventListener('click', () => {{
+                    sidebarVisible = !sidebarVisible;
+                    const icon = toggleBtn.querySelector('.toggle-icon');
+                    const text = toggleBtn.querySelector('.toggle-text');
+                    
+                    if (sidebarVisible) {{
+                        // Show: restore display first, then animate
+                        sidebar.style.display = '';
+                        sidebar.classList.remove('sidebar-hidden');
+                        setTimeout(() => {{
+                            sidebar.style.transform = 'translateX(0)';
+                            sidebar.style.opacity = '1';
+                        }}, 10);
+                        if (resultsColumn) {{
+                            resultsColumn.style.flexGrow = '8';
+                        }}
+                        if (icon) icon.textContent = '◀';
+                        if (text) text.textContent = 'HIDE LEFT MENU';
+                    }} else {{
+                        // Hide: animate to 90%, then apply display:none
+                        sidebar.classList.add('sidebar-hidden');
+                        sidebar.style.transform = 'translateX(-90%)';
+                        sidebar.style.opacity = '0.3';
+                        setTimeout(() => {{
+                            if (!sidebarVisible) {{
+                                sidebar.style.display = 'none';
+                            }}
+                        }}, 300);
+                        if (resultsColumn) {{
+                            resultsColumn.style.flexGrow = '12';
+                        }}
+                        if (icon) icon.textContent = '▶';
+                        if (text) text.textContent = 'SHOW LEFT MENU';
+                    }}
+                }});
+            }}
+            
             const tooltipTexts = {TOOLTIP_RADIO};
             let tooltip = document.getElementById("custom-tooltip");
             if (!tooltip) {{
@@ -1544,13 +1843,20 @@ with gr.Blocks(css=CSS, title=TITLE, theme=paddle_theme) as demo:
         """,
     )
 
-
 if __name__ == "__main__":
-    t = threading.Thread(target=delete_file_periodically)
+    t = threading.Thread(target=delete_file_periodically, daemon=True)
     t.start()
+
+    allowed_dirs = [
+        str(BASE_DIR / "res"), 
+        str(BASE_DIR / "icon"), 
+        str(BASE_DIR / "examples")
+    ]
+
     demo.launch(
         server_name="0.0.0.0",
         server_port=7860,
         show_error=True,
         inbrowser=False,
+        allowed_paths=allowed_dirs,
     )
